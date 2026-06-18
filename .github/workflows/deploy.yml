@@ -6,11 +6,27 @@ on:
       - main
 
 jobs:
-  deploy:
+  build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Deploy via SSH
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and Push Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/spring-ai-agent:latest
+
+      - name: Deploy on EC2 via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.EC2_HOST }}
@@ -19,19 +35,17 @@ jobs:
           script: |
             set -e
 
-            APP_DIR=/home/ubuntu/agent
+            IMAGE=${{ secrets.DOCKERHUB_USERNAME }}/spring-ai-agent:latest
 
-            if [ ! -d "$APP_DIR/.git" ]; then
-              rm -rf $APP_DIR
-              git clone https://github.com/1visha1/Spring-Ai.git $APP_DIR
-            fi
+            docker pull $IMAGE
 
-            cd $APP_DIR
+            docker stop spring-ai-agent || true
+            docker rm spring-ai-agent || true
 
-            git fetch origin
-            git reset --hard origin/main
-
-            docker compose down || true
-            docker compose up --build -d
+            docker run -d \
+              --name spring-ai-agent \
+              -p 8080:8080 \
+              --restart unless-stopped \
+              $IMAGE
 
             docker image prune -f
