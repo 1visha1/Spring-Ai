@@ -43,9 +43,10 @@ jobs:
             docker rm spring-ai-agent || true
 
             docker run -d \
-              --name spring-ai-agent \
-              -p 8080:8080 \
-              --restart unless-stopped \
-              $IMAGE
+            --name spring-ai-agent \
+            -p 8080:8080 \
+            --restart unless-stopped \
+            --env-file /home/ubuntu/agent/.env \
+            $IMAGE
 
             docker image prune -f
