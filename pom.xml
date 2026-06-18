@@ -24,7 +24,6 @@
         <resilience4j.version>2.2.0</resilience4j.version>
     </properties>
 
-    <!-- Spring AI BOM -->
     <dependencyManagement>
         <dependencies>
             <dependency>
@@ -39,53 +38,42 @@
 
     <dependencies>
 
-        <!-- Spring Boot Web -->
+        <!-- Web API -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
 
-        <!-- AOP for Circuit Breaker -->
+        <!-- WebClient -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-webflux</artifactId>
+        </dependency>
+
+        <!-- AOP (optional for circuit breaker) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-aop</artifactId>
         </dependency>
 
-        <!-- Resilience4j Circuit Breaker -->
+        <!-- Resilience4j -->
         <dependency>
             <groupId>io.github.resilience4j</groupId>
             <artifactId>resilience4j-spring-boot3</artifactId>
             <version>${resilience4j.version}</version>
         </dependency>
 
-        <!-- WebClient for reactive API calls -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-webflux</artifactId>
-        </dependency>
-
-        <!-- Jsoup for HTML Parsing -->
+        <!-- HTML parsing -->
         <dependency>
             <groupId>org.jsoup</groupId>
             <artifactId>jsoup</artifactId>
             <version>${jsoup.version}</version>
         </dependency>
 
-        <dependency>
-            <groupId>redis.clients</groupId>
-            <artifactId>jedis</artifactId>
-        </dependency>
-
-        <!-- Spring AI OpenAI Compatible -->
+        <!-- Spring AI (ONLY chat model support) -->
         <dependency>
             <groupId>org.springframework.ai</groupId>
             <artifactId>spring-ai-openai-spring-boot-starter</artifactId>
-        </dependency>
-
-        <!-- Transformers (Local Embeddings) all-MiniLM-L6-v2 -->
-        <dependency>
-            <groupId>org.springframework.ai</groupId>
-            <artifactId>spring-ai-transformers-spring-boot-starter</artifactId>
         </dependency>
 
         <!-- DevTools -->
@@ -103,12 +91,6 @@
             <optional>true</optional>
         </dependency>
 
-        <!-- Redis Vector Store -->
-        <dependency>
-            <groupId>org.springframework.ai</groupId>
-            <artifactId>spring-ai-redis-store-spring-boot-starter</artifactId>
-        </dependency>
-
         <!-- Testing -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -120,7 +102,6 @@
 
     <build>
         <plugins>
-            <!-- Spring Boot Plugin -->
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
