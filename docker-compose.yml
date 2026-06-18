@@ -1,20 +1,9 @@
 services:
 
-  redis:
-    image: redis/redis-stack:latest
-    container_name: redis-stack
-    restart: unless-stopped
-
-    ports:
-      - "6380:6379"
-      - "8001:8001"
-
-    volumes:
-      - redis_data:/data
-
   agent:
     build:
       context: .
+      dockerfile: Dockerfile
 
     container_name: spring-ai-agent
     restart: unless-stopped
@@ -24,9 +13,3 @@ services:
 
     ports:
       - "8080:8080"
-
-    depends_on:
-      - redis
-
-volumes:
-  redis_data:
