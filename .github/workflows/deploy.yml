@@ -1,52 +1,64 @@
 name: Deploy to EC2
 
 on:
-  push:
-    branches:
-      - main
+push:
+branches:
+- main
 
 jobs:
-  build-and-deploy:
-    runs-on: ubuntu-latest
+build-and-deploy:
+runs-on: ubuntu-latest
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+env:
+  AWS_REGION: ${{ secrets.AWS_REGION }}
+  ECR_REPOSITORY: spring-ai-agent
+  ECR_REGISTRY: 168064666968.dkr.ecr.ap-south-1.amazonaws.com
 
-      - name: Login to DockerHub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+steps:
+  - name: Checkout code
+    uses: actions/checkout@v4
 
-      - name: Build and Push Docker Image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/spring-ai-agent:latest
+  - name: Configure AWS Credentials
+    uses: aws-actions/configure-aws-credentials@v4
+    with:
+      aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Deploy on EC2 via SSH
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-          script: |
-            set -e
+  - name: Login to Amazon ECR
+    id: login-ecr
+    uses: aws-actions/amazon-ecr-login@v2
 
-            IMAGE=${{ secrets.DOCKERHUB_USERNAME }}/spring-ai-agent:latest
+  - name: Build and Push Docker Image
+    run: |
+      docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:latest .
+      docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
 
-            docker pull $IMAGE
+  - name: Deploy on EC2 via SSH
+    uses: appleboy/ssh-action@v1.0.3
+    with:
+      host: ${{ secrets.EC2_HOST }}
+      username: ${{ secrets.EC2_USER }}
+      key: ${{ secrets.EC2_SSH_KEY }}
+      script: |
+        set -e
 
-            docker stop spring-ai-agent || true
-            docker rm spring-ai-agent || true
+        aws ecr get-login-password --region ap-south-1 | \
+        docker login --username AWS --password-stdin \
+        168064666968.dkr.ecr.ap-south-1.amazonaws.com
 
-            docker run -d \
-            --name spring-ai-agent \
-            -p 8080:8080 \
-            --restart unless-stopped \
-            --env-file /home/ubuntu/agent/.env \
-            $IMAGE
+        IMAGE=168064666968.dkr.ecr.ap-south-1.amazonaws.com/spring-ai-agent:latest
 
-            docker image prune -f
+        docker pull $IMAGE
+
+        docker stop spring-ai-agent || true
+        docker rm spring-ai-agent || true
+
+        docker run -d \
+          --name spring-ai-agent \
+          -p 8080:8080 \
+          --restart unless-stopped \
+          --env-file /home/ubuntu/agent/.env \
+          $IMAGE
+
+        docker image prune -f
